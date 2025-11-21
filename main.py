@@ -1,58 +1,67 @@
 import random
-# We import the class we just wrote in the logic folder
+import os
+
 from logic.game_engine import HangmanGame
+
+from utils.file_handler import load_words_from_file, get_high_score, save_high_score
 
 def main():
     print("--- Welcome to the Hangman Project ---")
-    
-    # TEMPORARY: We will use a simple list for now. 
-    # Later, we can connect this to the 'data/words.txt' file.
-    word_list = ["PYTHON", "STUDENT", "PROJECT", "COLLEGE", "CODING"]
+
+    word_file_path = os.path.join("data", "words.txt")
+    score_file_path = os.path.join("data", "high_score.txt")
+
+    current_high_score = get_high_score(score_file_path)
+    print("Current High Score: " + str(current_high_score) + " wins.")
+
+    word_list = load_words_from_file(word_file_path)
     
     # Pick a random word
     chosen_word = random.choice(word_list)
     
-    # Initialize the game logic class
+    # Start the Game Logic
     game = HangmanGame(chosen_word)
 
-    # Start the Game Loop
+    # The Game Loop
     while True:
-        # 1. Show current status
         print("\n" + "="*30)
-        print("Word to Guess: " + game.get_display_word())
-        print("Lives Left: " + str(game.lives_left))
-        print("Guessed So Far: " + str(game.guessed_letters))
+        print("Word: " + game.get_display_word())
+        print("Lives: " + str(game.lives_left))
+        print("Guessed: " + str(game.guessed_letters))
         
-        # 2. Check for Game Over (Loss)
+        # Check for Loss
         if game.is_game_over():
-            print("\nGAME OVER! You ran out of lives.")
-            print("The word was: " + game.secret_word)
-            break # Exit the loop
+            print("\nGAME OVER! The word was: " + game.secret_word)
+            # If you lose, reset the high score to 0
+            save_high_score(score_file_path, 0) 
+            break 
             
-        # 3. Check for Victory (Win)
+        # Check for Win
         if game.is_victory():
             print("\nYOU WIN! You guessed the word!")
-            break # Exit the loop
+            # Calculate new score and save it to the file
+            new_score = current_high_score + 1
+            save_high_score(score_file_path, new_score)
+            print("High Score Saved!")
+            break 
 
-        # 4. Get User Input
+        # Get User Input
         guess = input("\nEnter a letter: ")
 
-        # Basic Validation: Ensure they type only 1 letter
+        # Basic Validation
         if len(guess) != 1 or not guess.isalpha():
             print("Invalid input! Please enter a single letter.")
             continue
 
-        # 5. Process the guess using our Logic Class
+        # Process the guess
         result = game.process_guess(guess)
 
-        # Give feedback to the user
         if result == "ALREADY_GUESSED":
             print("You already guessed that!")
         elif result == "CORRECT":
-            print("Good job! That letter is in the word.")
+            print("Correct!")
         elif result == "WRONG":
-            print("Sorry, that letter is not there.")
+            print("Wrong guess.")
 
-# This line ensures the game runs only when we execute this file directly
 if __name__ == "__main__":
     main()
